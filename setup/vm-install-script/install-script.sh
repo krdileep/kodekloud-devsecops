@@ -50,12 +50,16 @@ kubeadm init --kubernetes-version=${KUBE_VERSION} --skip-token-print
 mkdir -p ~/.kube
 sudo cp -i /etc/kubernetes/admin.conf ~/.kube/config
 
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+#kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+wget https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+kubectl apply -f weave-daemonset-k8s.yaml
+
 
 sleep 60
 
 echo "untaint controlplane node"
-kubectl taint node $(kubectl get nodes -o=jsonpath='{.items[].metadata.name}')  node-role.kubernetes.io/master-
+kubectl taint node $(kubectl get nodes -o=jsonpath='{.items[].metadata.name}')  node.kubernetes.io/not-ready:NoSchedule-
+#kubectl taint node $(kubectl get nodes -o=jsonpath='{.items[].metadata.name}')  node-role.kubernetes.io/master-
 kubectl get node -o wide
 
 
@@ -69,13 +73,30 @@ mvn -v
 
 
 echo ".........----------------#################._.-.-JENKINS-.-._.#################----------------........."
-wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+#wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+#sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+#sudo apt update
+#sudo apt install -y jenkins
+#systemctl daemon-reload
+#systemctl enable jenkins
+#sudo systemctl start jenkins
+
+# To install Jenkins with proper version of Java
+sudo apt install -y default-jre
+
+wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
 sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+
 sudo apt update
-sudo apt install -y jenkins
-systemctl daemon-reload
-systemctl enable jenkins
+
+sudo apt install -y jenkins 
+
+
 sudo systemctl start jenkins
+
+sudo apt install jenkins
+
+
 #sudo systemctl status jenkins
 sudo usermod -a -G docker jenkins
 echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
